@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$" />
+    <content url="jar:///usr/local/spark/python/lib/py4j-0.10.8.1-src.zip!/" />
+    <content url="jar:///usr/local/spark/python/lib/pyspark.zip!/" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
