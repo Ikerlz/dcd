@@ -25,9 +25,9 @@ np.set_printoptions(threshold=np.inf)
 #################################################
 
 # Model Settings
-sbm_matrix = sbm_matrix2
-sample_size = 5000
-master_num = 500
+sbm_matrix = sbm_matrix4
+sample_size = 10000
+master_num = 1000
 worker_per_sub = 2000
 partition_num = 50
 cluster_num = 3
@@ -80,8 +80,10 @@ worker_sdf = worker_sdf.repartitionByRange("PartitionID")
 # print("worker")
 # start1 = time.time()
 print(">>>>>>>>>>>>>>>  Worker聚类开始  <<<<<<<<<<<<<<<")
-worker_cluster_sdf, worker_time = worker_sdf.groupby("PartitionID").apply(clustering_worker_udf)
-print(">>>>>>>>>>>>>>>  Worker聚类结束，用时{}s  <<<<<<<<<<<<<<<".format(worker_time))
+start1 = time.time()
+worker_cluster_sdf = worker_sdf.groupby("PartitionID").apply(clustering_worker_udf)
+end1 = time.time()
+print(">>>>>>>>>>>>>>>  Worker聚类结束，用时{}s  <<<<<<<<<<<<<<<".format(end1 - start1))
 print(">>>>>>>>>>>>>>>  Spark DataFrame => Pandas DataFrame  <<<<<<<<<<<<<<<")
 worker_cluster_pdf = worker_cluster_sdf.toPandas()  # Spark DataFrame => Pandas DataFrame
 cluster_pdf = pd.concat([master_cluster_pdf, worker_cluster_pdf])  # merge the clustering result on master and worker

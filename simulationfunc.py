@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+from util import *
 import itertools
 import findspark
 import pyspark
@@ -43,10 +44,12 @@ def simulate_sbm_data(sbm_matrix, sample_size=1000, master_num=50, partition_num
 
         # get master information
         master_index = list(np.random.choice(data_index, master_num, replace=False))  # random select
-        adjacency_matrix_master = np.zeros((master_num, master_num), dtype=int)
-        for i in range(master_num):
-            for j in range(master_num):
-                adjacency_matrix_master[i, j] = adjacency_matrix[master_index[i], master_index[j]]
+        adjacency_matrix_master_rows = adjacency_matrix[master_index]
+        adjacency_matrix_master = adjacency_matrix_master_rows[:, master_index]
+        # adjacency_matrix_master = np.zeros((master_num, master_num), dtype=int)
+        # for i in range(master_num):
+        #     for j in range(master_num):
+        #         adjacency_matrix_master[i, j] = adjacency_matrix[master_index[i], master_index[j]]
 
         # here we construct a pandas data frame to store master information,
         # the first column is the "IndexNum";
@@ -72,10 +75,13 @@ def simulate_sbm_data(sbm_matrix, sample_size=1000, master_num=50, partition_num
         worker_index = [x for x in data_index if x not in master_index]
         worker_cluster_info = [index_cluster[x] for x in worker_index]
 
-        adjacency_matrix_worker = np.zeros((worker_total_num, master_num), dtype=int)
-        for i in range(worker_total_num):
-            for j in range(master_num):
-                adjacency_matrix_worker[i, j] = adjacency_matrix[worker_index[i], master_index[j]]
+        adjacency_matrix_worker_rows = adjacency_matrix[worker_index]
+        adjacency_matrix_worker = adjacency_matrix_worker_rows[:, master_index]
+
+        # adjacency_matrix_worker = np.zeros((worker_total_num, master_num), dtype=int)
+        # for i in range(worker_total_num):
+        #     for j in range(master_num):
+        #         adjacency_matrix_worker[i, j] = adjacency_matrix[worker_index[i], master_index[j]]
 
         partition_id = np.random.randint(0, partition_num, worker_total_num, dtype=int).reshape(worker_total_num, 1)
         data_worker_np = np.concatenate((partition_id,
@@ -102,10 +108,11 @@ def simulate_sbm_data(sbm_matrix, sample_size=1000, master_num=50, partition_num
 
 # TODO spectral clustering in master
 
-def spectral_clustering_master(master_pdf, cluster_num=3):
+def spectral_clustering_master(master_pdf, cluster_num=3, real_data=False):
     """
     :param master_pdf: a pandas data frame contained the information about the master
     :param cluster_num: the clustering number
+    :param real_data: check if the data is real data
     :return: a pseudo dict, a pandas DataFrame about clustering result and the clustering time
     """
     master_index = master_pdf["IndexNum"].tolist()
@@ -116,13 +123,23 @@ def spectral_clustering_master(master_pdf, cluster_num=3):
     # time start
     start_time = time.time()
 
-    # first, get the laplace matrix
-    degree_matrix = np.diag(np.sum(adjacency_matrix_master, axis=1) ** (-0.5))
-    laplace_matrix = np.dot(np.dot(degree_matrix, adjacency_matrix_master), degree_matrix)  # get the degree matrix
+    if real_data:
+        # first, get the laplace matrix
+        laplace_matrix = get_laplace_matrix(adjacency_matrix_master,
+                                            position='master',
+                                            regularization=True)
+        # second, get the spectral
+        spectral = get_spectral(laplace_matrix, cluster_num, normalization=True, method='svd')
+    else:
+        # first, get the laplace matrix
+        laplace_matrix = get_laplace_matrix(adjacency_matrix_master,
+                                            position='master',
+                                            regularization=False)
 
-    # second, get the spectral
-    u, sigma, v_transpose = np.linalg.svd(laplace_matrix)
-    spectral = u[:, list(range(cluster_num))]
+        # second, get the spectral
+        spectral = get_spectral(laplace_matrix, cluster_num, normalization=False, method='svd')
+        # u, sigma, v_transpose = np.linalg.svd(laplace_matrix)
+        # spectral = u[:, list(range(cluster_num))]
 
     # third, do k-means in spectral
     model = KMeans(n_clusters=cluster_num)
@@ -172,14 +189,14 @@ def spectral_clustering_master(master_pdf, cluster_num=3):
 # TODO spectral clustering in workers
 
 
-def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict):
+def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=False):
     """
     :param worker_pdf: the pandas data frame contained worker information
     :param master_pdf: the pandas data frame contained master information
     :param pseudo_center_dict: the result of clustering on master like {316.0: 0, 111.0: 1, 309.0: 2}
+    :param real_data: check if the data is real data
     :return: a pandas data frame (three columns, first column is the index,
     second column is the true cluster labels, third column is the cluster labels in experiment)
-    and the clustering time
     """
     master_index = master_pdf["IndexNum"].tolist()
     worker_index = worker_pdf["IndexNum"].tolist()
@@ -191,16 +208,30 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict):
     # [len(master_index)+len(worker_index)]-by-[len(pseudo_center_dict.keys())]
 
     # time start
-    start_time = time.time()
+    # start_time = time.time()
+    if real_data:
+        # first, get the laplace matrix
+        laplace_matrix = get_laplace_matrix(adjacency_matrix,
+                                            position='worker',
+                                            regularization=True)
+        # second, get the spectral
+        spectral = get_spectral(laplace_matrix, len(pseudo_index), normalization=True, method='svd')
+    else:
+        # first, get the laplace matrix
+        laplace_matrix = get_laplace_matrix(adjacency_matrix,
+                                            position='worker',
+                                            regularization=False)
+        # second, get the spectral
+        spectral = get_spectral(laplace_matrix, len(pseudo_index), normalization=False, method='svd')
 
     # first, get the laplace matrix
-    out_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=1) ** (-0.5))
-    in_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=0) ** (-0.5))
-    laplace_matrix = np.dot(np.dot(out_degree_matrix, adjacency_matrix), in_degree_matrix)
+    # out_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=1) ** (-0.5))
+    # in_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=0) ** (-0.5))
+    # laplace_matrix = np.dot(np.dot(out_degree_matrix, adjacency_matrix), in_degree_matrix)
 
     # second, get the spectral
-    u, sigma, v_transpose = np.linalg.svd(laplace_matrix)
-    spectral = u[:, list(range(len(pseudo_index)))]
+    # u, sigma, v_transpose = np.linalg.svd(laplace_matrix)
+    # spectral = u[:, list(range(len(pseudo_index)))]
 
     # third, clustering on the spectral
     worker_cluster_list = []
@@ -214,15 +245,15 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict):
             worker_cluster_list.append(pseudo_center_dict[pseudo_index[distance_list.index(min(distance_list))]])
 
     # time end
-    end_time = time.time()
+    # end_time = time.time()
 
     # finally, return the pandas data frame
     out_df = pd.DataFrame(worker_pdf, columns=["IndexNum", "ClusterInfo"])
     out_df["ClusterExp"] = worker_cluster_list
 
-    running_time = end_time - start_time
+    # running_time = end_time - start_time
 
-    return out_df, running_time
+    return out_df
 
 # TODO test "clustering_worker" function: succeed
 
@@ -276,6 +307,73 @@ def get_accurate(clustering_res_df, cluster_number):
     return accurate / clustering_res_df.shape[0]
 
 
+# for real data
+def split_master_worker(total_adjacency_matrix, index2label_dict, master_num=50, partition_num=10, random_select=False):
+    """
+    :param total_adjacency_matrix: the whole network matrix
+    :param index2label_dict: the dict contained the real cluster label information of all nodes
+    :param master_num: the number of master nodes (pilot nodes)
+    :param partition_num: the number of worker (M)
+    :param random_select: decide how to select the pilot nodes;
+           for real data, "random_select=False" is recommended,
+           which means we select the highest degree nodes as the pilot nodes
+    :return: a pandas data frame contained the worker information and a data frame contained master information
+    """
+    if total_adjacency_matrix.shape[0] != total_adjacency_matrix.shape[1]:
+        raise Exception('The shape of the matrix is not correct.')
+    else:
+        index_list = list(index2label_dict.keys())
+
+        # get master information
+        if random_select:
+            master_index = list(np.random.choice(index_list, master_num, replace=False))
+        else:
+            degree_list = np.sum(total_adjacency_matrix, axis=1).tolist()
+            index_degree_dict = dict(zip(index_list, degree_list))
+            sort_degree_list = sorted(index_degree_dict.items(), key=lambda item: item[1], reverse=True)
+            master_index = [item[0] for item in sort_degree_list[0:master_num]]
+
+        # construct the adjacency matrix of master
+        adjacency_matrix_master_rows = total_adjacency_matrix[master_index]
+        adjacency_matrix_master = adjacency_matrix_master_rows[:, master_index]
+        master_cluster_info = [index2label_dict[x] for x in master_index]
+        data_master_np = np.concatenate((np.array(master_index, dtype=int).reshape(master_num, 1),
+                                         np.array(master_cluster_info, dtype=int).reshape(master_num, 1),
+                                         adjacency_matrix_master), 1)
+        data_master_pdf = pd.DataFrame(data_master_np, columns=["IndexNum"] +
+                                                               ["ClusterInfo"] +
+                                                               [str(x) for x in master_index])
+
+        # get worker information
+        # here we need to construct a pandas data frame, the first column is the "PartitionID",
+        # which is used for partition in spark; the second column is the "IndexNum";
+        # the third line is the "ClusterInfo", which represent the true clustering information;
+        # then, other columns is the adjacency_matrix
+
+        worker_total_num = total_adjacency_matrix.shape[0] - master_num
+        worker_index = [x for x in index_list if x not in master_index]
+        worker_cluster_info = [index2label_dict[x] for x in worker_index]
+
+        adjacency_matrix_worker_rows = total_adjacency_matrix[worker_index]
+        adjacency_matrix_worker = adjacency_matrix_worker_rows[:, master_index]
+
+        # adjacency_matrix_worker = np.zeros((worker_total_num, master_num), dtype=int)
+        # for i in range(worker_total_num):
+        #     for j in range(master_num):
+        #         adjacency_matrix_worker[i, j] = adjacency_matrix[worker_index[i], master_index[j]]
+
+        partition_id = np.random.randint(0, partition_num, worker_total_num, dtype=int).reshape(worker_total_num, 1)
+        data_worker_np = np.concatenate((partition_id,
+                                         np.array(worker_index, dtype=int).reshape(worker_total_num, 1),
+                                         np.array(worker_cluster_info, dtype=int).reshape(worker_total_num, 1),
+                                         adjacency_matrix_worker), 1)
+        data_worker_pdf = pd.DataFrame(data_worker_np, columns=["PartitionID"] +
+                                                               ["IndexNum"] +
+                                                               ["ClusterInfo"] +
+                                                               [str(x) for x in master_index])
+        return data_master_pdf, data_worker_pdf
+
+
 # TODO some SBM matrix
 
 sbm_matrix1 = np.array([[0.7, 0.45, 0.45],
@@ -287,6 +385,9 @@ sbm_matrix2 = np.array([[0.8, 0.4, 0.4],
 sbm_matrix3 = np.array([[0.6, 0.45, 0.45],
                         [0.45, 0.6, 0.45],
                         [0.45, 0.45, 0.6]])
+sbm_matrix4 = np.array([[0.2, 0.1, 0.1],
+                        [0.1, 0.2, 0.1],
+                        [0.1, 0.1, 0.2]])
 ########################################################################################################################
 ########################################################################################################################
 
