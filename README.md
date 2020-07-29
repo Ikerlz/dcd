@@ -6,7 +6,7 @@
 - `Spark >= 2.3.1`
 - `Python >= 3.7.0`
   - `pyarrow >= 0.15.0` Please read this [compatible issue with Spark 2.3.x or 2.4.x](https://spark.apache.org/docs/latest/sql-pyspark-pandas-with-arrow.html#compatibility-setting-for-pyarrow--0150-and-spark-23x-24x)
-  - `numpy >= 1.18.1`
+  - `numpy >= 1.16.3`
   - `findspark >= 1.3.0`
 
   See [`setup.py`](setup.py) for detailed requirements.
