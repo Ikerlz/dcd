@@ -9,7 +9,6 @@ import pyspark
 from pyspark.sql.functions import pandas_udf, PandasUDFType
 from pyspark.sql.types import *
 import time
-
 # simulate data based on SBM model
 # TODO write a function to simulate SBM data
 
@@ -271,13 +270,14 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
 # TODO Calculate clustering accuracy
 
 
-def get_accurate(clustering_res_df, cluster_number):
+def get_accurate(clustering_res_df, cluster_number, error=False):
     """
     :param clustering_res_df: a pandas DataFrame about clustering result
     :param cluster_number: the number of the cluster
     (the first column is the index,
     the second column is the right information,
     the third column is the clustering information)
+    :param error: if error=True, then return the error rate, else, return the accuracy rate
     :return: the clustering accuracy
     """
     if clustering_res_df.shape[1] != 3:
@@ -294,8 +294,8 @@ def get_accurate(clustering_res_df, cluster_number):
     for i in range(cluster_number):
         for j in range(cluster_number):
             accuracy_matrix[i][j] = len(set(real_dict[i]).intersection(set(clustering_dict[j])))
-
-    print("The accuracy matrix is: \n", accuracy_matrix)
+    # for test
+    # print("The accuracy matrix is: \n", accuracy_matrix)
     case_iterator = itertools.permutations(range(cluster_number), cluster_number)
 
     accurate = 0
@@ -304,7 +304,10 @@ def get_accurate(clustering_res_df, cluster_number):
         acc = sum([accuracy_matrix[i][item[i]] for i in range(cluster_number)])
         if acc > accurate:
             accurate = acc
-    return accurate / clustering_res_df.shape[0]
+    if not error:
+        return accurate / clustering_res_df.shape[0]
+    else:
+        return 1 - accurate / clustering_res_df.shape[0]
 
 
 # for real data
