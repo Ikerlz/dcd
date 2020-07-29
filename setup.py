@@ -19,7 +19,7 @@ setup(name='dcd',
       packages=['dcd'],
       install_requires=[
           'pyspark >= 2.3.1',
-          'numpy   >= 1.16.3',
+          'numpy   >= 1.16.4',
           'pandas  >= 0.23.4',
           'findspark >= 1.3.0',
       ],
