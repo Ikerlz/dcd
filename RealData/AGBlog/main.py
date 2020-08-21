@@ -69,15 +69,15 @@ def spark_pilot_spectral_clustering(whole_node_num, node_in_master_num, cluster_
         else:
             worker_sdf = worker_sdf.unionAll(worker_sdf_isub)
     worker_sdf = worker_sdf.repartitionByRange("PartitionID")
-    start1 = time.time()
+    # start1 = time.time()
     worker_cluster_sdf = worker_sdf.groupby("PartitionID").apply(clustering_worker_udf)
-    end1 = time.time()
+    # end1 = time.time()
     worker_cluster_pdf = worker_cluster_sdf.toPandas()  # Spark DataFrame => Pandas DataFrame
     cluster_pdf = pd.concat(
         [master_cluster_pdf, worker_cluster_pdf])  # merge the clustering result on master and worker
 
     mis_rate = get_accurate(cluster_pdf, cluster_num, error=True)
-    running_time = round((master_time + end1 - start1), 6)
+    running_time = round(master_time, 6)
     return mis_rate, running_time
 
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # settings
     total_size = 1222
     # pilot_node_number = 400
-    pilot_ratio_list = [0.08] + [0.01*x for x in range(20, 31)] + [0.01]
+    pilot_ratio_list = [0.02*x for x in range(1, 16)]
     cluster_number = 2
     worker_number = 2  # equal to the partition number
     worker_per_sub = 500

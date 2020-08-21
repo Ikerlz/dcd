@@ -209,6 +209,7 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
     # time start
     # start_time = time.time()
     if real_data:
+        t1 = time.time()
         # first, get the laplace matrix
         laplace_matrix = get_laplace_matrix(adjacency_matrix,
                                             position='worker',
@@ -216,6 +217,7 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
         # second, get the spectral
         spectral = get_spectral(laplace_matrix, len(pseudo_index), normalization=True, method='svd')
     else:
+        t1 = time.time()
         # first, get the laplace matrix
         laplace_matrix = get_laplace_matrix(adjacency_matrix,
                                             position='worker',
@@ -242,6 +244,8 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
             for index in pseudo_index_in_total_index]
         if total_index[i] not in master_index:
             worker_cluster_list.append(pseudo_center_dict[pseudo_index[distance_list.index(min(distance_list))]])
+    t2 = time.time()
+    print(round(t2-t1, 6))
 
     # time end
     # end_time = time.time()
@@ -249,6 +253,9 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
     # finally, return the pandas data frame
     out_df = pd.DataFrame(worker_pdf, columns=["IndexNum", "ClusterInfo"])
     out_df["ClusterExp"] = worker_cluster_list
+    pd.options.display.max_columns = None
+    pd.options.display.max_rows = None
+    print(out_df)
 
     # running_time = end_time - start_time
 

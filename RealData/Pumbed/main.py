@@ -5,6 +5,9 @@ from math import ceil
 from pyspark import SparkContext
 from pyspark import SparkConf
 import os
+import warnings
+
+warnings.filterwarnings('ignore')
 os.environ['JAVA_HOME'] = '/usr/lib/jvm/jdk8u252'
 
 # Spark Environment
@@ -12,7 +15,7 @@ findspark.init("/usr/local/spark")
 conf = SparkConf().\
     setMaster("local[*]").\
     setAll([('spark.executor.memory', '6g'),
-            ('spark.driver.memory', '4g')])
+            ('spark.driver.memory', '10g')])
 # spark = SparkContext.getOrCreate(conf)
 spark = pyspark.sql.SparkSession.builder.\
     config(conf=conf).\
@@ -58,6 +61,7 @@ def spark_pilot_spectral_clustering(whole_node_num, node_in_master_num, cluster_
                                                  partition_num=worker_num)
     master_pseudo_dict, master_cluster_pdf, master_time = \
         spectral_clustering_master(master_pdf, cluster_num, real_data=True)
+    print(master_time)
     worker_size = whole_node_num - node_in_master_num
     sub_num = ceil(worker_size / worker_per_sub_reader)
     for i in range(sub_num):
@@ -70,15 +74,15 @@ def spark_pilot_spectral_clustering(whole_node_num, node_in_master_num, cluster_
         else:
             worker_sdf = worker_sdf.unionAll(worker_sdf_isub)
     worker_sdf = worker_sdf.repartitionByRange("PartitionID")
-    start1 = time.time()
+    # start1 = time.time()
     worker_cluster_sdf = worker_sdf.groupby("PartitionID").apply(clustering_worker_udf)
-    end1 = time.time()
+    # end1 = time.time()
     worker_cluster_pdf = worker_cluster_sdf.toPandas()  # Spark DataFrame => Pandas DataFrame
     cluster_pdf = pd.concat(
         [master_cluster_pdf, worker_cluster_pdf])  # merge the clustering result on master and worker
 
     mis_rate = get_accurate(cluster_pdf, cluster_num, error=True)
-    running_time = round((master_time + end1 - start1), 6)
+    running_time = round(master_time, 6)
     return mis_rate, running_time
 
 
@@ -94,6 +98,7 @@ if __name__ == '__main__':
     index2label_dict = dict(zip(index_list, label_list))
 
     # adjacency matrix
+    print('构造矩阵')
     pumbed_adjacency_matrix = np.zeros((19717, 19717), dtype=int)
 
     for i in range(19717):
@@ -109,12 +114,12 @@ if __name__ == '__main__':
     # settings
     total_size = 19717
     # pilot_node_number = 400
-    pilot_ratio_list = [0.02*x for x in range(7, 16)] + [0.02]
+    pilot_ratio_list = [0.02*x for x in range(13, 14)]
     cluster_number = 3
     worker_number = 2  # equal to the partition number
-    worker_per_sub = 2000
-    repeat_number = 10
-
+    worker_per_sub = 4000
+    repeat_number = 1
+    print('开始聚类')
     for pilot_ratio in pilot_ratio_list:
         pilot_node_number = math.ceil(pilot_ratio * total_size)
         mis_rate_list = []
@@ -126,10 +131,9 @@ if __name__ == '__main__':
                                                 worker_per_sub, pumbed_adjacency_matrix, index2label_dict)
             mis_rate_list.append(mis_rate_i)
             running_time_list.append(running_time_i)
+            print('一次运行结束')
         print('r:{},R:{},time:{}'.format(pilot_ratio,
                                          round(sum(mis_rate_list)/len(mis_rate_list), 5),
                                          round(sum(running_time_list)/len(running_time_list), 5)
                                          )
               )
-
-
