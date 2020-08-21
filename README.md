@@ -1,4 +1,4 @@
-# dcd: a distributed spectral clustering package 
+# `dcd`: a distributed spectral clustering package 
 
 ## What is it?
 `dcd` is a Python package that provides a **Distributed Community Detection Algorithm** for network data based on **Spark**.
