@@ -1,7 +1,19 @@
-# `dcd`
-**Distributed Community Detection** Algorithm implemented with Apache Spark
+# dcd: a distributed spectral clustering package 
 
-# System Requirements
+## What is it?
+`dcd` is a Python package that provides a **Distributed Community Detection Algorithm** for network data based on **Spark**.
+
+## Where to get it
+The source code is currently hosted on GitHub at: https://github.com/Ikerlz/dcd
+
+Binary installers for the latest released version are available at the [Python package index]().
+
+```py
+pip install pandas
+```
+
+
+## Dependencies
 
 - `Spark >= 2.3.1`
 - `Python >= 3.7.0`
@@ -9,18 +21,17 @@
   - `numpy >= 1.16.3`
   - `findspark >= 1.3.0`
 
-  See [`setup.py`](setup.py) for detailed requirements.
+## Installation from sources
 
-# Run the [PySpark](https://spark.apache.org/docs/latest/api/python/index.html) code on the Spark platform
-```sh
-  ./bash/spark_dcd_run.sh
- ```
- or simply run
+In the pandas directory (same one where you found this file after cloning the git repo), execute:
 
- ```py
-   ./spark_dcd.py
- ```
+```py
+python setup.py install
+```
 
-# References
+## License
+[MIT License](https://github.com/Ikerlz/dcd/blob/master/LICENSE)
 
-- [Li, Z.](http://lizhe.fun/), & [Wu, S.]() [Zhu, X.](https://xueningzhu.github.io/), (2020) Distributed Community Detection for Large Scale Networks Using Stochastic Block Model. [_Working Paper_]().
+## References
+
+[Li, Z.](http://lizhe.fun/), & [Wu, S.]() [Zhu, X.](https://xueningzhu.github.io/), (2020) Distributed Community Detection for Large Scale Networks Using Stochastic Block Model. [_Working Paper_]().
