@@ -9,7 +9,7 @@ The source code is currently hosted on GitHub at: https://github.com/Ikerlz/dcd
 Binary installers for the latest released version are available at the [Python package index]().
 
 ```py
-pip install pandas
+pip install dcd
 ```
 
 

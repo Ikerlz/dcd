@@ -7,7 +7,7 @@ def read(file):
 
 
 setup(name='dcd',
-      version='0.01',
+      version='0.1.0',
       description='Distributed Community Detection Algorithm',
       keywords='spark, spark-ml, pyspark, mapreduce',
       long_description=read('README.md'),
