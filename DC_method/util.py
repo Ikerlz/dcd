@@ -29,7 +29,7 @@ def simulate_sbm_dc_data(sbm_matrix, sample_size=1000, partition_num=10, cluster
 
         for i in range(1, sample_size):
             p_num = np.random.randint(0, partition_num, 1)[0]
-            X = np.append(X, [[i, -1, p_num]], axis=0) # to avoid node lost
+            X = np.append(X, [[i, -1, p_num]], axis=0)  # to avoid node lost
             for j in range(i):
                 if np.random.binomial(1, sbm_matrix[index_cluster[i], index_cluster[j]], 1):
                     X = np.append(X, [[i, j, p_num]], axis=0)
@@ -167,8 +167,10 @@ def worker_clustering(worker_df, cluster_num):
     # cluster_center = model_fit.cluster_centers_  # center points
     cluster_label = list(model_fit.labels_)  # labels (cluster information)
     # return
-    out_df = pd.DataFrame({"IndexNum": node_list,
-                          "ClusterExp": cluster_label})
+    worker_num = worker_df["PartitionID"].tolist()[0]
+    out_df = pd.DataFrame({"PartitionID": [worker_num for _ in range(len(node_list))],
+                           "IndexNum": node_list,
+                           "ClusterExp": cluster_label})
     return out_df
 
 
@@ -235,13 +237,13 @@ sbm_matrix4 = np.array([[0.2, 0.1, 0.1],
 if __name__ == '__main__':
     # Model Settings
     sbm_matrix = sbm_matrix4
-    sample_size = 10000
-    master_num = 1000
-    worker_per_sub = 2000
+    sample_size = 1000
+    master_num = 100
+    worker_per_sub = 20
     partition_num = 50
     cluster_num = 3
     a, b = simulate_sbm_dc_data(sbm_matrix)
-    c = worker_clustering(a, 123, 3)
+    c = worker_clustering(a, 3)
     real_label = []
     for row in c.itertuples(index=False, name='Pandas'):
         item = getattr(row, "IndexNum")
