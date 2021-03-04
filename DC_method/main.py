@@ -24,7 +24,7 @@ np.set_printoptions(threshold=np.inf)
 
 # Model Settings
 sbm_matrix = sbm_matrix2
-sample_size = 500
+sample_size = 2000
 # master_num = 1000
 # worker_per_sub = 2000
 partition_num = 10
@@ -75,9 +75,9 @@ worker_cluster_pdf = worker_cluster_sdf.toPandas()
 # clustering on master
 clustering_master = FusedGraphClustering(observed_adjacency_matrix=whole_adj_mat,
                                          cluster_number=cluster_num,
-                                         param_l=4,
-                                         param_t=0.8,
-                                         param_T=20,
+                                         param_l=3,
+                                         param_t=0.7,
+                                         param_T=10,
                                          params_for_norm_based_clustering=params_list)
 
 worker_clustering_clusters_list = \
@@ -113,7 +113,7 @@ for item in case_iterator:
     acc = sum([accuracy_matrix[i][item[i]] for i in range(cluster_num)])
     if acc > accurate:
         accurate = acc
-print(acc/np.sum(accuracy_matrix))
+print(accurate/np.sum(accuracy_matrix))
 
 
 # # 构造fused graph
