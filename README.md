@@ -1,17 +1,12 @@
-# `dcd`: a distributed spectral clustering package 
+# `dcd`: distributed spectral clustering
 
-## What is it?
-`dcd` is a Python package that provides a **Distributed Community Detection Algorithm** for network data based on **Spark**.
+**implemented with Apache Spark**
 
-## Where to get it
-The source code is currently hosted on GitHub at: https://github.com/Ikerlz/dcd
+## Introduction
 
-Binary installers for the latest released version are available at the [Python package index]().
+In this work we develop a distributed spectral clustering algorithm for community detection in large scale networks. To handle the problem, we distribute l pilot network nodes on the master server and the others on worker servers. A spectral clustering algorithm is first conducted on the master to select pseudo centers. The indexes of the pseudo centers are then broadcasted to workers to complete distributed community detection task using a SVD type algorithm. The proposed distributed algorithm has three merits. First, the communication cost is low since only the indexes of pseudo centers are communicated. Second, no further iteration algorithm is needed on workers and hence it does not suffer from problems as initialization and non-robustness. Third, both the computational complexity and the storage requirements are much lower compared to using the whole adjacency matrix. A Python package [DCD](www.github.com/Ikerlz/dcd) is developed to implement the distributed algorithm for a Spark system. Theoretical properties are provided with respect to the estimation accuracy and mis-clustering rates. Lastly, the advantages of the proposed methodology are illustrated by experiments on a variety of synthetic and empirical datasets.
 
-```py
-pip install dcd
-```
-
+-----
 
 ## Dependencies
 
@@ -21,16 +16,19 @@ pip install dcd
   - `numpy >= 1.16.3`
   - `findspark >= 1.3.0`
 
-## Installation from sources
+-----
 
-In the pandas directory (same one where you found this file after cloning the git repo), execute:
+## Run the PySpark code on the Spark platform
 
-```py
-python setup.py install
-```
+
+
+-----
 
 ## License
 [MIT License](https://github.com/Ikerlz/dcd/blob/master/LICENSE)
+
+
+-----
 
 ## References
 
