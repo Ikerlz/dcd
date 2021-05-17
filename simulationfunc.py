@@ -40,20 +40,10 @@ def simulate_sbm_data(sbm_matrix, sample_size=1000, master_num=50, partition_num
                 adjacency_matrix[i, j] = np.random.binomial(1, sbm_matrix[index_cluster[i], index_cluster[j]], 1)
                 adjacency_matrix[j, i] = adjacency_matrix[i, j]
 
-
         # get master information
         master_index = list(np.random.choice(data_index, master_num, replace=False))  # random select
         adjacency_matrix_master_rows = adjacency_matrix[master_index]
         adjacency_matrix_master = adjacency_matrix_master_rows[:, master_index]
-        # adjacency_matrix_master = np.zeros((master_num, master_num), dtype=int)
-        # for i in range(master_num):
-        #     for j in range(master_num):
-        #         adjacency_matrix_master[i, j] = adjacency_matrix[master_index[i], master_index[j]]
-
-        # here we construct a pandas data frame to store master information,
-        # the first column is the "IndexNum";
-        # the second column is the "ClusterInfo";
-        # other columns represent the adjacency_matrix_master
         master_cluster_info = [index_cluster[x] for x in master_index]
         data_master_np = np.concatenate((np.array(master_index, dtype=int).reshape(master_num, 1),
                                          np.array(master_cluster_info, dtype=int).reshape(master_num, 1),
@@ -204,12 +194,10 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
     adjacency_matrix_master = master_pdf.iloc[:, 2:]
     adjacency_matrix_worker = worker_pdf.iloc[:, 3:]
     adjacency_matrix = np.vstack((adjacency_matrix_master, adjacency_matrix_worker))
-    # [len(master_index)+len(worker_index)]-by-[len(pseudo_center_dict.keys())]
 
     # time start
-    # start_time = time.time()
+    start_time = time.time()
     if real_data:
-        t1 = time.time()
         # first, get the laplace matrix
         laplace_matrix = get_laplace_matrix(adjacency_matrix,
                                             position='worker',
@@ -217,22 +205,12 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
         # second, get the spectral
         spectral = get_spectral(laplace_matrix, len(pseudo_index), normalization=True, method='svd')
     else:
-        t1 = time.time()
         # first, get the laplace matrix
         laplace_matrix = get_laplace_matrix(adjacency_matrix,
                                             position='worker',
                                             regularization=False)
         # second, get the spectral
         spectral = get_spectral(laplace_matrix, len(pseudo_index), normalization=False, method='svd')
-
-    # first, get the laplace matrix
-    # out_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=1) ** (-0.5))
-    # in_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=0) ** (-0.5))
-    # laplace_matrix = np.dot(np.dot(out_degree_matrix, adjacency_matrix), in_degree_matrix)
-
-    # second, get the spectral
-    # u, sigma, v_transpose = np.linalg.svd(laplace_matrix)
-    # spectral = u[:, list(range(len(pseudo_index)))]
 
     # third, clustering on the spectral
     worker_cluster_list = []
@@ -244,21 +222,14 @@ def clustering_worker(worker_pdf, master_pdf, pseudo_center_dict, real_data=Fals
             for index in pseudo_index_in_total_index]
         if total_index[i] not in master_index:
             worker_cluster_list.append(pseudo_center_dict[pseudo_index[distance_list.index(min(distance_list))]])
-    t2 = time.time()
-    print(round(t2-t1, 6))
-
-    # time end
-    # end_time = time.time()
+    end_time = time.time()
+    run_time = end_time - start_time
 
     # finally, return the pandas data frame
     out_df = pd.DataFrame(worker_pdf, columns=["IndexNum", "ClusterInfo"])
     out_df["ClusterExp"] = worker_cluster_list
-    pd.options.display.max_columns = None
-    pd.options.display.max_rows = None
-    print(out_df)
-
-    # running_time = end_time - start_time
-
+    # insert running time
+    out_df.loc['time'] = [run_time, run_time, run_time]
     return out_df
 
 # TODO test "clustering_worker" function: succeed

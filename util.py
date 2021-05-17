@@ -19,11 +19,6 @@ def get_laplace_matrix(adjacency_matrix, position="master", regularization=False
             return np.dot(np.dot(d, adjacency_matrix), d)
 
         elif position == "worker":
-            # out_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=1) ** (-0.5))
-            # for i in range(out_degree_matrix.shape[0]):
-            #     if out_degree_matrix[i, i] == np.infty:
-            #         out_degree_matrix[i, i] = 1000
-            # in_degree_matrix = np.diag(np.sum(adjacency_matrix, axis=0) ** (-0.5))
 
             # 2020.7.18 for test
             out_degree = np.sum(adjacency_matrix, axis=1)
@@ -37,10 +32,6 @@ def get_laplace_matrix(adjacency_matrix, position="master", regularization=False
             laplace_matrix = np.dot(np.dot(out_degree_matrix, adjacency_matrix), in_degree_matrix)
 
             return laplace_matrix
-
-            # D = np.diag(np.sum(adjacency_matrix, axis=1) ** (-0.5))
-            # F = np.diag(np.sum(adjacency_matrix, axis=0) ** (-0.5))
-            # return np.dot(np.dot(D, adjacency_matrix), F)  # 得到度矩阵
 
         else:
             raise Exception("Input Error: worker or master is expected but {} are given".format(position))
@@ -58,10 +49,6 @@ def get_laplace_matrix(adjacency_matrix, position="master", regularization=False
             laplace_matrix = np.dot(np.dot(out_degree_matrix, adjacency_matrix), in_degree_matrix)
 
             return laplace_matrix
-
-            # D = np.diag(np.sum(adjacency_matrix, axis=1) ** (-0.5))
-            # F = np.diag(np.sum(adjacency_matrix, axis=0) ** (-0.5))
-            # return np.dot(np.dot(D, adjacency_matrix), F)  # 得到度矩阵
 
         else:
             raise Exception("Input Error: worker or master is expected but {} are given".format(position))
