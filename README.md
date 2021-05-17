@@ -20,6 +20,53 @@ In this work we develop a distributed spectral clustering algorithm for communit
 
 ## Run the PySpark code on the Spark platform
 
+### Simulation
+
+```
+python simulation.py
+```
+
+### Real Data
+
+- AgBlog
+
+```
+python AGBlog/main.py
+```
+
+- Pumbed
+
+```
+python Pumbed/main.py
+```
+
+- Pokec
+
+```
+python Pokec/main.py
+```
+
+- Cora
+
+```
+python Cora/main.py
+```
+
+### Norm based method
+
+This is an implement of [A Divide and Conquer Framework for Distributed Graph Clustering](http://proceedings.mlr.press/v37/yange15.pdf)
+
+```
+python DC_method/main.py
+```
+
+## Comparison
+
+Compare **dcd** with the **norm based method**
+
+```
+python Comparison/main.py
+```
 
 
 -----
