@@ -32,4 +32,4 @@ In this work we develop a distributed spectral clustering algorithm for communit
 
 ## References
 
-[Li, Z.](http://lizhe.fun/), & [Wu, S.]() [Zhu, X.](https://xueningzhu.github.io/), (2020) Distributed Community Detection for Large Scale Networks Using Stochastic Block Model. [_Working Paper_]().
+[Li, Z.](http://lizhe.fun/), & [Wu, S.]() [Zhu, X.](https://xueningzhu.github.io/), (2020) Distributed Community Detection for Large Scale Networks Using Stochastic Block Model. [_Working Paper_](https://arxiv.org/pdf/2009.11747.pdf).
